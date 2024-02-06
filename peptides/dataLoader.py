@@ -90,16 +90,19 @@ class dataLoader:
         return e
     
     
-    def load_data(self, allele):
+    def load_data(self, 
+                  allele, 
+                  PCA_dim = 2,
+                  size_dataset = 100):
 
-        data = self.get_training_set(allele, length=9)[:100]
+        data = self.get_training_set(allele, length=9)[:size_dataset]
         data['binary_label'] = self.convert_ic50_to_binary(data['ic50'])
         encoder = self.blosum_encode
 
         X = np.array(data['peptide'].apply(encoder).tolist())
         self.y = data['binary_label'].values
 
-        self.pca = PCA(n_components=10) 
+        self.pca = PCA(n_components=PCA_dim) 
         self.X_pca = self.pca.fit_transform(X)
 
         return self.X_pca, self.y

@@ -13,12 +13,10 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 class Classical_NeuralNetwork:
 
-    def __init__(self, X, y):
+    def __init__(self, X_pca, y):
         
-        self.X = X
         self.y = y
-        self.pca = None
-        self.X_pca = None
+        self.X_pca = X_pca
         self.cm = None
         self.classes = ['Weak Binder', 'Strong Binder']
         
@@ -44,32 +42,6 @@ class Classical_NeuralNetwork:
         plt.xlabel('Predicted label')
         plt.tight_layout()
 
-    
-    def plot_pca_variance(self):
-        
-        pca = self.pca
-
-        plt.figure(figsize=(10, 6))
-        plt.title('Variance of the Principal Components')
-        plt.plot(pca.explained_variance_)
-        plt.xlabel('ith Principal Component')
-        plt.ylabel('Variance')
-        plt.yscale('log')
-        plt.show()
-
-    
-    def plot_pca_2D(self):
-
-        X_pca = self.X_pca
-
-        plt.figure(figsize=(10, 6))
-        plt.title('Labeled samples in the latent space of the two first PC')
-        plt.scatter(X_pca[:,0], X_pca[:,1], c= self.y)
-        plt.xlabel('Principal Component 1')
-        plt.ylabel('Principal Component 2')
-        plt.show()
-
-
 
     def train(self):
         
@@ -86,8 +58,16 @@ class Classical_NeuralNetwork:
             X_train, X_test = X_pca[train_index], X_pca[test_index]
             y_train, y_test = y[train_index], y[test_index]
 
-            clf = MLPClassifier(solver='adam', hidden_layer_sizes=(10,), max_iter=1, warm_start=True, learning_rate='adaptive', alpha=0.0001, shuffle=True, random_state=42, activation='logistic') #activation testet: 'relu', 'tanh' and 'logistic'.
-            
+            clf = MLPClassifier(solver='adam', 
+                                hidden_layer_sizes=(3,),
+                                max_iter=1, 
+                                warm_start=True, 
+                                learning_rate='adaptive', 
+                                alpha=0.0001, 
+                                shuffle=True, 
+                                random_state=42, 
+                                activation='logistic') 
+ 
             n_iterations = 100
             iteration_accuracies = []
             
