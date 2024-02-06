@@ -43,23 +43,29 @@ class Classical_NeuralNetwork:
         plt.tight_layout()
 
 
-    def train(self):
+    def train(self,
+              n_splits = 2,
+              n_iterations = 10,
+              hidden_layer_sizes = 10):
         
         X_pca = self.X_pca
         y = self.y
 
-        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        kf = KFold(n_splits = n_splits, 
+                   shuffle = True, 
+                   random_state = 42)
+        
         auc_scores = []
         accuracy_scores = []
         confusion_matrices = []
-        fold_accuracies = []
+        accuracies = np.zeros((2, n_splits, n_iterations))
 
-        for train_index, test_index in kf.split(X_pca): 
+        for index_fold, (train_index, test_index) in enumerate(kf.split(X_pca)): 
             X_train, X_test = X_pca[train_index], X_pca[test_index]
             y_train, y_test = y[train_index], y[test_index]
 
             clf = MLPClassifier(solver='adam', 
-                                hidden_layer_sizes=(3,),
+                                hidden_layer_sizes=(hidden_layer_sizes,),
                                 max_iter=1, 
                                 warm_start=True, 
                                 learning_rate='adaptive', 
@@ -67,26 +73,27 @@ class Classical_NeuralNetwork:
                                 shuffle=True, 
                                 random_state=42, 
                                 activation='logistic') 
- 
-            n_iterations = 100
-            iteration_accuracies = []
-            
-            for _ in range(n_iterations):
+
+            for index_itr in range(n_iterations):
                 clf.fit(X_train, y_train)
-                predictions = clf.predict(X_test)
-                iteration_accuracy = accuracy_score(y_test, predictions)
-                iteration_accuracies.append(iteration_accuracy)
-            
-            fold_accuracies.append(iteration_accuracies)
+
+                predictions_train = clf.predict(X_train)
+                predictions_test = clf.predict(X_test)
+
+                accuracies[0][index_fold][index_itr] = accuracy_score(y_train, predictions_train)
+                accuracies[1][index_fold][index_itr] = accuracy_score(y_test, predictions_test)
+   
             
             proba = clf.predict_proba(X_test)[:, 1]
             auc = roc_auc_score(y_test, proba)
-            accuracy = accuracy_score(y_test, predictions)
+            accuracy = accuracy_score(y_test, predictions_test)
+            cm = confusion_matrix(y_test, predictions_test)
+
             auc_scores.append(auc)
             accuracy_scores.append(accuracy)
-            cm = confusion_matrix(y_test, predictions)
             confusion_matrices.append(cm)
 
+            
         # Plot AUC and Accuracy Scores per Fold
         plt.figure(figsize=(10, 6))
         plt.plot(range(1, kf.get_n_splits() + 1), auc_scores, label='AUC Scores', marker='o')
@@ -99,12 +106,14 @@ class Classical_NeuralNetwork:
         plt.show()
 
         # Plot Average Validation Accuracy vs. Iteration across all folds
-        avg_accuracies = np.mean(fold_accuracies, axis=0)
+        avg_accuracies_train = np.mean(accuracies[0], axis=0)
+        avg_accuracies_test = np.mean(accuracies[1], axis=0)
         plt.figure(figsize=(10, 6))
-        plt.plot(range(1, n_iterations + 1), avg_accuracies, label='Validation Accuracy')
+        plt.plot(range(1, n_iterations + 1), avg_accuracies_train, label='Train Accuracy')
+        plt.plot(range(1, n_iterations + 1), avg_accuracies_test, label='Test Accuracy')
         plt.xlabel('Iteration')
         plt.ylabel('Accuracy')
-        plt.title('Average Validation Accuracy vs. Iteration across all folds')
+        plt.title('Average Test and Train Accuracy vs. Iteration across all folds')
         plt.legend()
         plt.show()
 
