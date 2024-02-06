@@ -1,15 +1,12 @@
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
+
 from sklearn.model_selection import KFold
 from sklearn.metrics import confusion_matrix, roc_auc_score, accuracy_score
 from sklearn.neural_network import MLPClassifier
-import matplotlib.pyplot as plt
 from sklearn.exceptions import ConvergenceWarning
-import warnings
-from sklearn.decomposition import PCA
 
-import os
-import math
+import warnings
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
@@ -76,14 +73,8 @@ class Classical_NeuralNetwork:
 
     def train(self):
         
-        X = self.X
+        X_pca = self.X_pca
         y = self.y
-
-        pca = PCA(n_components=10) 
-        X_pca = pca.fit_transform(X)
-
-        self.pca = pca
-        self.X_pca = X_pca
 
         kf = KFold(n_splits=5, shuffle=True, random_state=42)
         auc_scores = []

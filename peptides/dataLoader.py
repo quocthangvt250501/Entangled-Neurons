@@ -4,6 +4,9 @@ from sklearn.exceptions import ConvergenceWarning
 import warnings
 import os
 import math
+import matplotlib.pyplot as plt
+
+from sklearn.decomposition import PCA
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
@@ -16,6 +19,9 @@ class dataLoader:
         self.allele = 'HLA-A*03:01'
         self.blosum = pd.read_csv(os.path.join(self.path_dataset,'blosum62.csv'))
         self.data = None
+        self.X_pca = None
+        self.pca = None
+        self.y = None
 
 
     def aff2log50k(self, a):
@@ -91,6 +97,34 @@ class dataLoader:
         encoder = self.blosum_encode
 
         X = np.array(data['peptide'].apply(encoder).tolist())
-        y = data['binary_label'].values
+        self.y = data['binary_label'].values
 
-        return X, y
+        self.pca = PCA(n_components=10) 
+        self.X_pca = self.pca.fit_transform(X)
+
+        return self.X_pca, self.y
+
+
+    def plot_pca_variance(self):
+        
+        pca = self.pca
+
+        plt.figure(figsize=(10, 6))
+        plt.title('Variance of the Principal Components')
+        plt.plot(pca.explained_variance_)
+        plt.xlabel('ith Principal Component')
+        plt.ylabel('Variance')
+        plt.yscale('log')
+        plt.show()
+
+    
+    def plot_pca_2D(self):
+
+        X_pca = self.X_pca
+
+        plt.figure(figsize=(10, 6))
+        plt.title('Labeled samples in the latent space of the two first PC')
+        plt.scatter(X_pca[:,0], X_pca[:,1], c= self.y)
+        plt.xlabel('Principal Component 1')
+        plt.ylabel('Principal Component 2')
+        plt.show()
